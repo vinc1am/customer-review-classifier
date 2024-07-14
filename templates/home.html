@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+
+    <style>
+        @import url(https://fonts.googleapis.com/css?family=Open+Sans);
+        * {
+            box-sizing: border-box;
+        }
+        #title {
+            text-align: center;
+            padding: 15px;
+            font-size: 32px;
+            font-weight: bold;
+            font-family: 'Open Sans', sans-serif;
+            color: #74637f; 
+        }
+
+        #title::after {
+            content: "";
+            display: block;
+            border-bottom: 3px dashed #74637f; 
+            width: 60%;
+            margin: 10px auto;
+        }
+        body {
+            margin: 30px;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .form-container, .result-container {
+            width: 45%;
+        }
+
+        textarea {
+            width: 100%;
+            height: 600px;
+            padding: 10px;
+            font: 20px/28px 'Open Sans', sans-serif;
+            letter-spacing: 1px;
+            display: block;
+            position: relative;
+            border: 2px solid #74637f;
+            color: #444;
+            background-color: white;
+            overflow: auto;
+            resize: none;
+        }
+
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #c6aada;
+        }
+
+        input[type="submit"] {
+            display: block;
+            width: 300px;
+            padding: 10px;
+            margin: 30px auto 0;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            background-color: #74637f;
+            font: 18px 'Open Sans', sans-serif;
+            letter-spacing: 1px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #c6aada;
+        }
+
+        .results-highlighted {
+            width: 100%;
+            height: 600px;
+            padding: 10px;
+            font: 20px/28px 'Open Sans', sans-serif;
+            letter-spacing: 1px;
+            position: relative;
+            border: 2px solid #74637f;
+            color: #444;
+            background-color: white;
+            overflow: auto;
+            resize: none;
+            text-align: justify;
+        }
+
+        .highlight {
+            background-color: #FFD700;
+            color: #000;
+        }
+        p.dashed {
+            border-style: dashed;
+            padding: 2px;
+        }
+        #logo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50px; 
+        height: 50px; 
+    }
+    </style>
+</head>
+
+<body>
+    <script>
+        window.onload = function() {
+            let svgContainer = document.getElementById('svg-container');
+        
+            // Create a svg
+            let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+        
+            let highlights = document.getElementsByClassName('highlight');
+            let commentDivs = document.getElementsByClassName('result-container')[0].children;
+        
+            // Draw lines between each highlight and its corresponding comment
+            for (let i = 0; i < highlights.length; i++) {
+                let highlight = highlights[i].getBoundingClientRect();
+                let comment = commentDivs[i + 3].getBoundingClientRect(); // Skip first two elements
+        
+                // Create the line
+                let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        
+                line.setAttribute('x1', highlight.right);
+                line.setAttribute('y1', highlight.top + highlight.height / 2);
+                line.setAttribute('x2', comment.left);
+                line.setAttribute('y2', comment.top + comment.height / 2);
+        
+                line.setAttribute('stroke', 'black');
+                line.setAttribute('stroke-width', '2');
+        
+                // Add it to the svg
+                svg.appendChild(line);
+            }
+        
+            // Add the svg to the container
+            svgContainer.appendChild(svg);
+        };
+        </script> 
+    <div id="title">
+        Customer Review AI Classifier
+    </div>
+    <div class="container">
+        <div class="form-container">
+            {% if not result %}
+                <form method="POST">
+                    <textarea name="review" placeholder="Enter your review here">{{ input }}</textarea>
+                    <input type="submit" value="Analyse Reviews">
+                </form>
+            {% else %}
+                <div class="results-highlighted">
+                    {{ result['Highlighted_Input'] | safe }}
+                </div>
+        
+                <!-- New form for 'Reset Preview' -->
+                <form method="GET" action="/">
+                    <input type="submit" value="Reset Preview">
+                </form>
+            {% endif %}
+        </div>
+    
+        {% if result %}
+        <div class="result-container">
+            {{ custom_style('Overall Category - ' + result['Main_Category']) | safe }}</p><hr>
+            {% for comment in result['Comments'] %}
+                <div style="color:Black; border: 3px solid {{ comment['Color'] }}; box-shadow: 2px 3px 5px {{ comment['Color'] }}; padding:10px; margin:5px; border-radius:5px; text-align:center">
+                    <table style="width:100%">
+                        <tr>
+                            <td valign="top" style="background-color: {{ comment['Color'] }}; color: white; text-align: left;">
+                                <strong>Summary</strong>
+                            </td>
+                            <td style="text-align: justify;">
+                                {{ comment['Summary'] }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td valign="top" style="background-color: {{ comment['Color'] }}; color: white; text-align: left;">
+                                <strong>Category</strong>
+                            </td>
+                            <td style="text-align: justify;">
+                                {{ comment['Category'] }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div id="svg-container" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: -1;"></div>
+    </div>
+</body>
+</html>
